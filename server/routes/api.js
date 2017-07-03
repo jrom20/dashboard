@@ -117,6 +117,7 @@ router.get('/dashboards/:id*', (req, res) => {
 
   let script = '';
   let dashboardFile = getFileById(privateDashboard, dashboardId);
+
   if (dashboardFile) {
     let filePath = path.join(privateDashboard, dashboardFile);
     if (isValidFile(filePath)) {
@@ -140,7 +141,7 @@ router.get('/dashboards/:id*', (req, res) => {
 router.post('/dashboards/:id', (req, res) => {
   let { id } = req.params;
   let { script } = req.body || '';
-  
+
   const { privateDashboard } = paths();
   let dashboardFile = getFileById(privateDashboard, id);
   let filePath = path.join(privateDashboard, dashboardFile);
@@ -208,22 +209,31 @@ router.put('/dashboards/:id', (req, res) => {
 
 function getFileById(dir, id) {
   let files = fs.readdirSync(dir) || [];
-  
+
   // Make sure the array only contains files
   files = files.filter(fileName => fs.statSync(path.join(dir, fileName)).isFile());
+
   let dashboardFile = null;
   if (files.length) { 
-    files.forEach(fileName => {
-      let filePath = path.join(dir, fileName);
 
-      if (isValidFile(filePath)) {
-        const fileContents = getFileContents(filePath);
-        const dashboardId = getField(fields.id, fileContents);
-        if (dashboardId === id) {
-          dashboardFile = fileName;
+    let dashboardIndex = parseInt(id);
+    if (!isNaN(dashboardIndex) && files.length > dashboardIndex) {
+      dashboardFile = files[dashboardIndex];
+    }
+
+    if (!dashboardFile) {
+      files.forEach(fileName => {
+        let filePath = path.join(dir, fileName);
+
+        if (isValidFile(filePath)) {
+          const fileContents = getFileContents(filePath);
+          const dashboardId = getField(fields.id, fileContents);
+          if (dashboardId === id) {
+            dashboardFile = fileName;
+          }
         }
-      }
-    });
+      });
+    }
   }
 
   return dashboardFile;
